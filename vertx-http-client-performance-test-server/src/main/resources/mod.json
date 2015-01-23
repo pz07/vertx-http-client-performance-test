@@ -1,0 +1,5 @@
+{
+  // Java verticle
+  "main":"pz.HttpServer",
+  "auto-redeploy": true
+}
