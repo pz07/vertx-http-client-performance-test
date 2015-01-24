@@ -1,0 +1,224 @@
+# node.js server start
+node index.js
+
+# vert.x server start
+$ mvn package vertx:fatJar && rm -f serr.log && java -jar target/vertx-http-client-performance-test-server-0.1-fat.jar 2> server.log
+
+# run test
+mvn package vertx:fatJar && rm -f client.log && java -jar target/vertx-http-client-performance-test-client-0.1-fat.jar -conf conf.json 2> client.log
+
+##################################################################################
+# node.js server, single test verticle, default HttpClient settings, 10k resources
+##################################################################################
+{
+    "port": 9990,
+    "pipelining": true,
+    "keepAlive": true,
+    "maxPoolSize": 1,
+    "iterations": 10000,
+    "testVerticleInstances": 1
+}
+
+## Response times on client side
+# longest response times
+$ cat client.log | grep "Response in " | cut -d " " -f 4 | sort -n -r | head
+3124
+3124
+3124
+3124
+3124
+3124
+3124
+3123
+3123
+3123
+
+# average response time
+$ cat client.log | grep "Response in " | cut -d " " -f 4 | awk '{ total += $1; count++ } END { print total/count }'
+1001.94
+
+## HAProxy logs
+ 127.0.0.1:49666 [24/Jan/2015:14:15:15.270] node-server node-server/default 7/0/0/75/7308 200 3418354 - - CD-- 1/1/1/1/0 0/0 "GET /res/1422105375230_967915 HTTP/1.1"
+ 127.0.0.1:49664 [24/Jan/2015:14:15:15.169] node-server node-server/default 56/0/0/10/7555 201 1878887 - - ---- 0/0/0/0/0 0/0 "POST /res HTTP/1.1"
+ 127.0.0.1:49707 [24/Jan/2015:14:15:52.552] node-server node-server/default 53/0/0/1/54261 201 1878832 - - cD-- 1/1/1/1/0 0/0 "POST /res HTTP/1.1"
+ 127.0.0.1:49709 [24/Jan/2015:14:15:52.649] node-server node-server/default 5/0/0/81/184286 200 155864895 - - ---- 0/0/0/0/0 0/0 "GET /res/1422105412606_88563 HTTP/1.1"
+
+## Latency on server side
+# longest request times
+cat server.log | grep "GET in" | cut -d " " -f 3 | sort -n -r | head
+1045
+25
+18
+11
+10
+10
+10
+8
+8
+8
+
+# average request times
+$ cat server.log | grep "GET in" | cut -d " " -f 3 | awk '{ total += $1; count++ } END { print total/count }'
+0.135065
+
+
+##################################################################################
+# vert.x server, single test verticle, default HttpClient settings, 10k resources
+##################################################################################
+{
+    "port": 7770,
+    "pipelining": true,
+    "keepAlive": true,
+    "maxPoolSize": 1,
+    "iterations": 10000,
+    "testVerticleInstances": 1
+}
+
+## Response times on client side
+# longest response times
+$ cat client.log | grep "Response in " | cut -d " " -f 4 | sort -n -r | head -n 50
+3048
+3048
+3048
+3048
+3048
+3048
+3048
+3048
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3047
+3046
+3046
+3046
+3046
+3046
+3046
+
+## average response time
+cat client.log | grep "Response in " | cut -d " " -f 4 | awk '{ total += $1; count++ } END { print total/count }'
+48.742
+
+## HAProxy logs
+ 127.0.0.1:39811 [24/Jan/2015:14:32:21.339] vertx-test vertx-test/default 144/0/1/41/52293 201 1084762 - - cD-- 1/1/1/1/0 0/0 "POST /res HTTP/1.1"
+ 127.0.0.1:39813 [24/Jan/2015:14:32:21.548] vertx-test vertx-test/default 7/0/0/2090/182437 200 186932513 - - ---- 0/0/0/0/0 0/0 "GET /res/1422106521511_2036600332 HTTP/1.1"
+
+##################################################################################
+# vert.x server, single test verticle, default HttpClient settings, 10 resource (max. 10 concurrent requests)
+##################################################################################
+ {
+    "port": 7770,
+    "pipelining": true,
+    "keepAlive": true,
+    "maxPoolSize": 1,
+    "iterations": 10,
+    "testVerticleInstances": 1
+}
+
+$ cat client.log | grep "Response in " | cut -d " " -f 4 | sort -n -r | head -n 10
+22
+16
+16
+16
+16
+15
+14
+14
+12
+12
+
+$ cat client.log | grep "Response in " | cut -d " " -f 4 | awk '{ total += $1; count++ } END { print total/count }'
+1.30624
+
+
+##################################################################################
+# vert.x server, single test verticle, default HttpClient settings, 100 resource (max. 100 concurrent requests)
+##################################################################################
+ {
+    "port": 7770,
+    "pipelining": true,
+    "keepAlive": true,
+    "maxPoolSize": 1,
+    "iterations": 100,
+    "testVerticleInstances": 1
+}
+
+cat client.log | grep "Response in " | cut -d " " -f 4 | sort -n -r | head -n 10
+94
+94
+52
+51
+51
+51
+51
+50
+49
+49
+
+$ cat client.log | grep "Response in " | cut -d " " -f 4 | awk '{ total += $1; count++ } END { print total/count }'
+1.30624
+
+cat client.log | grep "Response in " | cut -d " " -f 4 | awk '{ total += $1; count++ } END { print total/count }'
+1.28711
+
+##################################################################################
+# vert.x server, single test verticle, default HttpClient settings, 1000 resource (max. 1000 concurrent requests)
+##################################################################################
+ {
+    "port": 7770,
+    "pipelining": true,
+    "keepAlive": true,
+    "maxPoolSize": 1,
+    "iterations": 1000,
+    "testVerticleInstances": 1
+}
+
+$ cat client.log | grep "Response in " | cut -d " " -f 4 | sort -n -r | head -n 10
+727
+727
+727
+727
+726
+726
+700
+699
+699
+699
+
+$ cat client.log | grep "Response in " | cut -d " " -f 4 | awk '{ total += $1; count++ } END { print total/count }'
+2.40708
+
+
