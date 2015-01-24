@@ -4,6 +4,14 @@ var app = express()
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.use(function(req, res, next){
+  start = Date.now()
+  next();
+  finished = Date.now()
+
+  console.log(req.method + " in " + (finished - start))
+});
+
 app.get('/res/:id', function (req, res) {
   var id = req.params.id.split("_"); 
   if (id.length != 2) {
