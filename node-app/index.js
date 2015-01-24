@@ -20,7 +20,7 @@ app.get('/res/:id', function (req, res) {
 })
 
 function one_or_two_min() {
-  return (Math.floor(Math.random() * 100)%10 + 1)*1000*60;
+  return (Math.floor(Math.random() * 100)%3 + 1)*1000*60;
 }
 
 app.post('/res', function (req, res) {
