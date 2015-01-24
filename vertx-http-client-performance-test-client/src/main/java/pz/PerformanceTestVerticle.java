@@ -8,6 +8,7 @@ import org.vertx.java.platform.Verticle;
 public class PerformanceTestVerticle extends Verticle {
 
     public static final String RESOURCE_INITIALIZED_ADDRESS = "resource-initialized";
+    private static final String CHECK_STATUS_ADDRESS = "check-status-address";
 
     private int numberOfIterations;
     private int numberOfProcessedResources = 0;
@@ -16,25 +17,23 @@ public class PerformanceTestVerticle extends Verticle {
 
     @Override
     public void start() {
-        String host = container.config().getString("host", "localhost");
-        int port = container.config().getInteger("port", 7777);
-        boolean keepAlive = container.config().getBoolean("keepAlive", true);
-
-        httpClient = vertx.createHttpClient()
-                .setKeepAlive(keepAlive)
-                .setHost(host)
-                .setPort(port);
+        httpClient = Util.createHttpClient(vertx, container);
 
         numberOfIterations = container.config().getInteger("iterations", 1000);
 
         prepareData(numberOfIterations);
 
         vertx.eventBus().registerHandler(RESOURCE_INITIALIZED_ADDRESS, msg -> {
-            checkStatus(msg.body().toString());
+            checkStatus(httpClient, msg.body().toString());
+        });
+
+        vertx.eventBus().registerHandler(CHECK_STATUS_ADDRESS, msg -> {
+            checkStatus(httpClient, msg.body().toString());
         });
     }
 
-    private void checkStatus(String resId) {
+
+    private void checkStatus(HttpClient httpClient, String resId) {
         httpClient.get("/res/" + resId, new CheckStatusHandler(resId, System.currentTimeMillis()))
                 .end();
     }
@@ -70,9 +69,9 @@ public class PerformanceTestVerticle extends Verticle {
 
                    if (numberOfProcessedResources == numberOfIterations) {
                        vertx.eventBus().send(StartVerticle.END, "Success.");
-                   } else {
-                       vertx.setTimer(500, t -> checkStatus(resId));
                    }
+               } else {
+                   vertx.setTimer(500, t -> vertx.eventBus().send(CHECK_STATUS_ADDRESS, resId));
                }
             });
 

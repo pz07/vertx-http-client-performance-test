@@ -11,7 +11,7 @@ public class StartVerticle extends Verticle {
     public void start() {
         JsonObject config = container.config();
 
-        container.deployWorkerVerticle(SetupTestDataVerticle.class.getCanonicalName(), config, 1, true,
+        container.deployWorkerVerticle(SetupTestDataVerticle.class.getCanonicalName(), config, 1, false,
                 v -> container.deployVerticle(PerformanceTestVerticle.class.getCanonicalName(), config));
 
         vertx.eventBus().registerHandler(END, msg -> {
